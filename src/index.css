@@ -242,6 +242,78 @@ body {
   font-weight: 500;
 }
 
+/* ===== ANSWER INPUT (BEAUTIFUL) ===== */
+.answer-input-container {
+  background: linear-gradient(145deg, #fffbf7 0%, #fdf5ed 50%, #f9f0e8 100%);
+  border-radius: 22px;
+  padding: 1.8rem 1.5rem;
+  margin: 1.2rem 0;
+  box-shadow: 0 8px 24px rgba(123, 94, 87, 0.08), 0 2px 8px rgba(123, 94, 87, 0.04), inset 0 1px 4px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(217, 184, 165, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.answer-input-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--secondary-rose), var(--accent-rose), var(--secondary-rose));
+  border-radius: 22px 22px 0 0;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 1.1rem 1.3rem;
+  border: 2px solid var(--secondary-rose);
+  border-radius: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  background: var(--card-white);
+  color: var(--text-dark);
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(123, 94, 87, 0.04);
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+}
+
+.answer-input::placeholder {
+  color: var(--accent-rose);
+  opacity: 0.5;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.answer-input:focus {
+  border-color: var(--primary-brown);
+  box-shadow: 0 6px 20px rgba(123, 94, 87, 0.12);
+  transform: translateY(-1px);
+}
+
+.answer-input:hover:not(:focus) {
+  border-color: var(--accent-rose);
+}
+
+@media (max-width: 480px) {
+  .answer-input-container {
+    padding: 1.5rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 18px;
+  }
+  .answer-input-container::before {
+    border-radius: 18px 18px 0 0;
+  }
+  .answer-input {
+    padding: 1rem 1.1rem;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+}
+
 /* ===== POLAROID GALLERY ===== */
 .polaroid-gallery {
   display: flex;
