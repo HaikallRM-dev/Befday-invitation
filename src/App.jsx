@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './index.css';
 
@@ -47,12 +47,50 @@ export default function App() {
   const [showShareToast, setShowShareToast] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState('');
   const [syncStatus, setSyncStatus] = useState('');
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const audioRef = useRef(null);
+  const clickAudioRef = useRef(null);
+  const envelopeAudioRef = useRef(null);
+  const confettiAudioRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => setLoading(false), 2500);
+    const progressTimer = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressTimer);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(progressTimer);
+    };
   }, []);
+
+  // ===== SOUND EFFECTS =====
+  const playClickSound = () => {
+    if (clickAudioRef.current) {
+      clickAudioRef.current.currentTime = 0;
+      clickAudioRef.current.play().catch(() => {});
+    }
+  };
+
+  const playEnvelopeSound = () => {
+    if (envelopeAudioRef.current) {
+      envelopeAudioRef.current.currentTime = 0;
+      envelopeAudioRef.current.play().catch(() => {});
+    }
+  };
+
+  const playConfettiSound = () => {
+    if (confettiAudioRef.current) {
+      confettiAudioRef.current.currentTime = 0;
+      confettiAudioRef.current.play().catch(() => {});
+    }
+  };
 
   useEffect(() => {
     try {
@@ -111,14 +149,30 @@ export default function App() {
 
   const handleEnvelopeClick = () => {
     setEnvelopeOpen(true);
+    playEnvelopeSound();
     setTimeout(() => setStep(0), 1200);
   };
 
-  const handleQuizAnswer = (option) => {
+  const [hearts, setHearts] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [zoomedImg, setZoomedImg] = useState(null);
+
+  const createHeartBurst = useCallback((x, y) => {
+    const id = Date.now();
+    const heart = { id, x, y };
+    setHearts(prev => [...prev, heart]);
+    setTimeout(() => setHearts(prev => prev.filter(h => h.id !== id)), 1000);
+  }, []);
+
+  const handleQuizAnswer = (option, event) => {
     setSelectedAnswers({ ...selectedAnswers, [quizIndex]: option });
     setQuizFeedback(quizQuestions[quizIndex].feedback);
+    playClickSound();
+    createHeartBurst(event?.clientX || 0, event?.clientY || 0);
     setTimeout(() => {
       setQuizFeedback('');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 500);
       if (quizIndex < quizQuestions.length - 1) {
         setQuizIndex(quizIndex + 1);
       } else {
@@ -130,6 +184,7 @@ export default function App() {
   const handleYes = () => {
     setShowConfetti(true);
     setStep(7);
+    playConfettiSound();
     setTimeout(() => setShowConfetti(false), 4000);
     syncToSheets('YES');
   };
@@ -178,15 +233,80 @@ export default function App() {
           <span className="loading-heart">♥</span>
           <span className="loading-heart">♥</span>
         </div>
-        <p className="loading-text">Loading something special...</p>
+        <div className="loading-bar-container">
+          <div className="loading-bar" style={{ width: `${loadingProgress}%` }} />
+        </div>
+        <p className="loading-text">Loading something special... {loadingProgress}%</p>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <motion.div style={styles.container} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      {/* Heart Burst Effects */}
+      <AnimatePresence>
+        {hearts.map(heart => (
+          <motion.span
+            key={heart.id}
+            className="heart-burst"
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 1.5, opacity: 0, y: -50 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            style={{ left: heart.x, top: heart.y, fontSize: '1.5rem' }}
+          >
+            ♥
+          </motion.span>
+        ))}
+      </AnimatePresence>
+
+      {/* Success Checkmark */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            style={{ position: 'fixed', top: '2rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}
+          >
+            <span className="success-checkmark" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Photo Zoom Modal */}
+      <AnimatePresence>
+        {zoomedImg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setZoomedImg(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, cursor: 'pointer' }}
+          >
+            <motion.img
+              src={zoomedImg}
+              alt="Zoomed"
+              initial={{ scale: 0.5 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.5 }}
+              style={{ maxWidth: '90%', maxHeight: '80vh', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <audio ref={audioRef} loop>
         <source src="https://cdn.pixabay.com/audio/2024/01/23/audio_1234567890.mp3" type="audio/mpeg" />
+      </audio>
+      <audio ref={clickAudioRef}>
+        <source src="https://cdn.pixabay.com/audio/2024/01/23/audio_click.mp3" type="audio/mpeg" />
+      </audio>
+      <audio ref={envelopeAudioRef}>
+        <source src="https://cdn.pixabay.com/audio/2024/01/23/audio_envelope.mp3" type="audio/mpeg" />
+      </audio>
+      <audio ref={confettiAudioRef}>
+        <source src="https://cdn.pixabay.com/audio/2024/01/23/audio_confetti.mp3" type="audio/mpeg" />
       </audio>
 
       <div className="floating-bg">
@@ -235,10 +355,10 @@ export default function App() {
       {step === 0 && (
         <motion.div className="fade-in-card" style={styles.card} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <div style={styles.dateBadge}>07 · 09 · 2026</div>
-          <h1 style={styles.heading}>Dear Farisya Aleeya,</h1>
+          <h1 style={styles.heading}><span className="typewriter">Dear Farisya Aleeya,</span></h1>
           <p style={styles.bodyText}>This letter is special for you. It's something small I made special for you.</p>
           <p style={styles.handwritten}>So... please read.</p>
-          <button style={styles.primaryButton} onClick={() => setStep(1)}>Open envelope ✉️</button>
+          <button className="btn-glow" style={styles.primaryButton} onClick={() => setStep(1)}>Open envelope ✉️</button>
         </motion.div>
       )}
 
@@ -247,7 +367,7 @@ export default function App() {
           <p style={styles.bodyText}>This isn't a normal invitation.</p>
           <p style={styles.bodyText}>It's something small I made especially for you.</p>
           <p style={styles.handwritten}>So... take your time.</p>
-          <button style={styles.primaryButton} onClick={() => setStep(2)}>I'm listening 🤍</button>
+          <button className="btn-glow" style={styles.primaryButton} onClick={() => setStep(2)}>I'm listening 🤍</button>
         </motion.div>
       )}
 
@@ -257,7 +377,7 @@ export default function App() {
           <h2 style={styles.quizHeading}>{quizQuestions[quizIndex].question}</h2>
           <div style={styles.optionsContainer}>
             {quizQuestions[quizIndex].options.length > 0 && quizQuestions[quizIndex].options.map((opt, index) => (
-              <button key={index} className={selectedAnswers[quizIndex] === opt ? 'option-selected' : ''} style={{ ...styles.optionButton, backgroundColor: selectedAnswers[quizIndex] === opt ? 'var(--secondary-rose)' : '#F9F6F2', borderColor: selectedAnswers[quizIndex] === opt ? 'var(--primary-brown)' : '#D9B8A5' }} onClick={() => handleQuizAnswer(opt)}>{opt}</button>
+              <button key={index} className={`option-hover ${selectedAnswers[quizIndex] === opt ? 'option-selected' : ''}`} style={{ ...styles.optionButton, backgroundColor: selectedAnswers[quizIndex] === opt ? 'var(--secondary-rose)' : '#F9F6F2', borderColor: selectedAnswers[quizIndex] === opt ? 'var(--primary-brown)' : '#D9B8A5' }} onClick={(e) => handleQuizAnswer(opt, e)}>{opt}</button>
             ))}
           </div>
           {quizQuestions[quizIndex].needsTextInput && (
@@ -280,10 +400,10 @@ export default function App() {
 
       {step === 3 && (
         <motion.div className="fade-in-card" style={styles.card} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-          <h2 style={styles.heading}>You know…</h2>
+          <h2 style={styles.heading}><span className="typewriter">You know…</span></h2>
           <p style={styles.bodyText}>At 7 September is my birthday, I never been like this before to have someone with me.</p>
           <p style={styles.bodyText}>And this year, for my birthday, I would love to invite you to be my special guest. But wait read below.</p>
-          <button style={styles.primaryButton} onClick={() => setStep(4)}>What is it? ✨</button>
+          <button className="btn-glow" style={styles.primaryButton} onClick={() => setStep(4)}>What is it? ✨</button>
         </motion.div>
       )}
 
@@ -295,7 +415,7 @@ export default function App() {
             {memories.map((m, i) => (
               <motion.div key={i} className="polaroid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 * i }}>
                 <div className="polaroid-img">
-                  {m.img ? <img src={m.img} alt={m.caption} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: m.crop || 'center center', borderRadius: '2px' }} /> : m.emoji}
+                  {m.img ? <img src={m.img} alt={m.caption} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: m.crop || 'center center', borderRadius: '2px', cursor: 'pointer' }} onClick={() => setZoomedImg(m.img)} /> : m.emoji}
                 </div>
                 <p className="polaroid-caption">{m.caption}</p>
               </motion.div>
@@ -307,7 +427,7 @@ export default function App() {
             <p><strong>DRESS CODE:</strong> Whatever makes you comfortable</p>
             <p><strong>DESTINATION:</strong> <span style={styles.secretText}>■■■■■■■■■■■■ (Secret Stop)</span></p>
           </div>
-          <button style={styles.primaryButton} onClick={() => setStep(5)}>Continue to the Plan →</button>
+          <button className="btn-glow" style={styles.primaryButton} onClick={() => setStep(5)}>Continue to the Plan →</button>
         </motion.div>
       )}
 
@@ -322,14 +442,14 @@ export default function App() {
           <hr style={styles.divider} />
           <h4 style={styles.ruleTitle}>Birthday Date Rules:</h4>
           <p style={styles.ruleText}>1. You have to smile at least 3 times.<br/>2. One picture together is compulsory.<br/>3. No saying "I'm tired" early!</p>
-          <button style={styles.primaryButton} onClick={() => setStep(6)}>Aha, I see... →</button>
+          <button className="btn-glow" style={styles.primaryButton} onClick={() => setStep(6)}>Aha, I see... →</button>
         </motion.div>
       )}
 
       {step === 6 && (
         <motion.div className="fade-in-card" style={styles.card} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
           <p style={styles.handwrittenLarge}>So if you're willing...</p>
-          <h1 style={styles.heading}>Will you go on a date with me?</h1>
+          <h1 style={styles.heading}><span className="typewriter">Will you go on a date with me?</span></h1>
           <p style={styles.bodyText}>07 September 2026 · After work</p>
           <div style={styles.buttonGroup}>
             <button style={styles.yesButton} onClick={handleYes}>YES, definitely! 🤍</button>
@@ -344,7 +464,7 @@ export default function App() {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}>
             <div style={{ ...styles.dateBadge, backgroundColor: '#FFFDFC', color: '#7B5E57' }}>DATE CONFIRMED 🎉</div>
           </motion.div>
-          <h2 style={{ ...styles.heading, color: '#FFFDFC' }}>I knew you had good taste.</h2>
+          <h2 style={{ ...styles.heading, color: '#FFFDFC' }}><span className="typewriter">I knew you had good taste.</span></h2>
           <p style={{ ...styles.bodyText, color: '#D9B8A5' }}>Thank you for being part of my story.</p>
           <p style={{ ...styles.handwrittenLarge, color: '#FFFDFC' }}>See you on the 7th. — your birthday boy</p>
           {syncStatus && <p style={{ color: '#D9B8A5', fontSize: '0.85rem', marginTop: '1rem' }}>{syncStatus}</p>}
@@ -354,24 +474,24 @@ export default function App() {
 
       {step === 8 && (
         <motion.div className="fade-in-card" style={styles.card} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-          <h2 style={styles.heading}>The Heart</h2>
+          <h2 style={styles.heading}><span className="typewriter">The Heart</span></h2>
           <p style={styles.bodyText}>But honestly... I don't really need anything big for my birthday. I just want to spend some time with you. Eat something together. Laugh about random things. Talk about our day. Maybe take a few pictures. Maybe make another memory.</p>
           <p style={styles.handwrittenLarge}>That's really all I want.</p>
           <p style={styles.bodyText}>Because the point isn't where we go. It's who I'm going with.</p>
-          <button style={styles.primaryButton} onClick={() => setStep(6)}>← Back to question</button>
+          <button className="btn-glow" style={styles.primaryButton} onClick={() => setStep(6)}>← Back to question</button>
         </motion.div>
       )}
 
       <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', fontSize: '0.75rem', color: '#B88B7D' }}>
         {step >= 0 ? `Step ${step}/8` : 'Envelope'}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 const styles = {
   container: { display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '20px', minHeight: '100vh', position: 'relative', zIndex: 1 },
-  card: { backgroundColor: '#FFFDFC', padding: '35px 30px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(123, 94, 87, 0.08)', width: '100%', maxWidth: '420px', textAlign: 'center', border: '1px solid #EFECE6' },
+  card: { backgroundColor: 'rgba(255, 253, 252, 0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255, 253, 252, 0.3)', padding: '35px 30px', borderRadius: '16px', boxShadow: '0 8px 32px rgba(123, 94, 87, 0.1), inset 0 1px 4px rgba(255, 255, 255, 0.5)', width: '100%', maxWidth: '420px', textAlign: 'center' },
   dateBadge: { display: 'inline-block', fontSize: '0.85rem', letterSpacing: '2px', color: '#7B5E57', backgroundColor: '#F9F6F2', padding: '6px 14px', borderRadius: '20px', marginBottom: '20px', fontWeight: '600' },
   heading: { fontFamily: '"Playfair Display", serif', fontSize: '1.8rem', color: '#302B29', marginBottom: '15px' },
   subHeading: { fontFamily: '"Playfair Display", serif', fontSize: '1.4rem', color: '#7B5E57', marginBottom: '10px' },
@@ -380,7 +500,7 @@ const styles = {
   handwritten: { fontFamily: '"Caveat", cursive', fontSize: '1.4rem', color: '#B88B7D', marginBottom: '25px' },
   handwrittenLarge: { fontFamily: '"Caveat", cursive', fontSize: '1.6rem', color: '#B88B7D', marginBottom: '15px' },
   stepIndicator: { fontSize: '0.8rem', color: '#B88B7D', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '10px' },
-  primaryButton: { backgroundColor: '#7B5E57', color: '#FFFDFC', border: 'none', padding: '12px 28px', fontSize: '1rem', borderRadius: '30px', cursor: 'pointer', fontWeight: '500', transition: 'background 0.2s', width: '100%', boxShadow: '0 4px 12px rgba(123, 94, 87, 0.2)' },
+  primaryButton: { backgroundColor: '#7B5E57', color: '#FFFDFC', border: 'none', padding: '12px 28px', fontSize: '1rem', borderRadius: '30px', cursor: 'pointer', fontWeight: '500', transition: 'all 0.3s ease', width: '100%', boxShadow: '0 4px 12px rgba(123, 94, 87, 0.2)', position: 'relative', overflow: 'hidden' },
   optionsContainer: { display: 'flex', flexDirection: 'column', gap: '12px' },
   optionButton: { backgroundColor: '#F9F6F2', color: '#302B29', border: '1px solid #D9B8A5', padding: '12px 18px', fontSize: '0.95rem', borderRadius: '12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' },
   itineraryBox: { textAlign: 'left', backgroundColor: '#F9F6F2', padding: '15px 20px', borderRadius: '10px', fontSize: '0.9rem', color: '#302B29', marginBottom: '20px', lineHeight: '1.5' },
