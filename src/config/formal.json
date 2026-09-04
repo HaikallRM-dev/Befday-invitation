@@ -1,0 +1,32 @@
+{
+  "name": "Formal Majlis",
+  "price": 60,
+  "theme": {
+    "cream": "#F9F6F2",
+    "black": "#1a1a1a",
+    "gold": "#C9A96E",
+    "white": "#FFFFFF"
+  },
+  "music": "/music/formal.mp3",
+  "images": [
+    "/images/templates/formal/photo1.jpg",
+    "/images/templates/formal/photo2.jpg"
+  ],
+  "questions": [
+    { "q": "Name:", "type": "text" },
+    { "q": "Designation/Title:", "type": "text" },
+    { "q": "Organization:", "type": "text" },
+    { "q": "Email:", "type": "text" },
+    { "q": "Phone:", "type": "text" },
+    { "q": "Dietary restrictions?", "options": ["None", "Vegetarian", "Vegan", "Halal", "Other"] },
+    { "q": "Plus one?", "options": ["Yes", "No"] },
+    { "q": "Special requests?", "type": "text" }
+  ],
+  "itinerary": {
+    "date": "TBD",
+    "time": "TBD",
+    "venue": "TBD",
+    "dressCode": "Formal / Lounge suit"
+  },
+  "rsvp": true
+}
