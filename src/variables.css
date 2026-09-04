@@ -1,0 +1,17 @@
+:root {
+  --bg-cream: #F9F6F2;
+  --warm-brown: #7B5E57;
+  --dusty-rose: #D9B8A5;
+  --muted-rose: #B88B7D;
+  --text-dark: #302B29;
+  --card-white: #FFFDFC;
+  --dark-brown: #302B29;
+  --off-white: #FFFDFC;
+  --primary-brown: #7B5E57;
+  --accent-rose: #D9B8A5;
+  --cream: #F9F6F2;
+  --emerald: #10b981;
+  --danger: #dc2626;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+}
