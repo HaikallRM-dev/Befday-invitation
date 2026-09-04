@@ -11,14 +11,24 @@ const SHEETS_CONFIG = {
 // Google Apps Script code (untuk copy paste nanti)
 const GAS_CODE = `
 function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Birthday Responses');
-  if (!sheet) {
-    sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet('Birthday Responses');
-    sheet.appendRow(['Timestamp', 'Question 1', 'Question 2', 'Question 3', 'Question 4', 'Question 5', 'Question 6', 'Question 7', 'Question 8', 'Question 9', 'Question 10', 'Question 11', 'Final Answer']);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Timestamp', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Final']);
   }
+  
   var data = JSON.parse(e.postData.contents);
   sheet.appendRow([new Date(), ...data.answers, data.finalAnswer]);
   return ContentService.createTextOutput(JSON.stringify({status: 'success'})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  
+  var data = sheet.getDataRange().getValues();
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 `;
 
@@ -156,6 +166,8 @@ export default function App() {
   const [hearts, setHearts] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [zoomedImg, setZoomedImg] = useState(null);
+  const [showResponses, setShowResponses] = useState(false);
+  const [liveResponses, setLiveResponses] = useState([]);
 
   const createHeartBurst = useCallback((x, y) => {
     const id = Date.now();
@@ -187,6 +199,18 @@ export default function App() {
     playConfettiSound();
     setTimeout(() => setShowConfetti(false), 4000);
     syncToSheets('YES');
+  };
+
+  const fetchResponses = async () => {
+    if (!SHEETS_CONFIG.scriptUrl || SHEETS_CONFIG.scriptUrl.includes('AWAK ISI')) return;
+    try {
+      const response = await fetch(SHEETS_CONFIG.scriptUrl);
+      const data = await response.json();
+      setLiveResponses(data.slice(1));
+      setShowResponses(true);
+    } catch (e) {
+      console.warn('Failed to fetch responses:', e);
+    }
   };
 
   const handleReset = () => {
@@ -308,6 +332,43 @@ export default function App() {
       <audio ref={confettiAudioRef}>
         <source src="https://cdn.pixabay.com/audio/2024/01/23/audio_confetti.mp3" type="audio/mpeg" />
       </audio>
+
+      {/* Live Responses Modal */}
+      <AnimatePresence>
+        {showResponses && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowResponses(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, cursor: 'pointer', padding: '1rem' }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 50 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ background: 'var(--card-white)', borderRadius: '20px', padding: '2rem', maxWidth: '500px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+            >
+              <h2 style={{ fontFamily: 'var(--font-heading)', color: 'var(--primary-brown)', marginBottom: '1.5rem', textAlign: 'center' }}>💌 Live Responses</h2>
+              {liveResponses.length === 0 ? (
+                <p style={{ textAlign: 'center', color: 'var(--muted-rose)' }}>Tiada jawapan lagi...</p>
+              ) : (
+                liveResponses.map((row, i) => (
+                  <div key={i} style={{ background: 'var(--bg-cream)', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--muted-rose)', marginBottom: '0.5rem' }}>🕐 {row[0]}</p>
+                    {row.slice(1, 12).map((ans, j) => (
+                      ans && <p key={j} style={{ fontSize: '0.9rem', color: 'var(--text-dark)', marginBottom: '0.3rem' }}><strong>Q{j+1}:</strong> {ans}</p>
+                    ))}
+                    <p style={{ fontSize: '0.85rem', color: 'var(--primary-brown)', fontWeight: 600, marginTop: '0.5rem' }}>🎯 {row[12] || 'No answer'}</p>
+                  </div>
+                ))
+              )}
+              <button className="btn-glow" style={styles.primaryButton} onClick={() => setShowResponses(false)}>Tutup</button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="floating-bg">
         {floatingItems.map((item, i) => (
@@ -468,6 +529,7 @@ export default function App() {
           <p style={{ ...styles.bodyText, color: '#D9B8A5' }}>Thank you for being part of my story.</p>
           <p style={{ ...styles.handwrittenLarge, color: '#FFFDFC' }}>See you on the 7th. — your birthday boy</p>
           {syncStatus && <p style={{ color: '#D9B8A5', fontSize: '0.85rem', marginTop: '1rem' }}>{syncStatus}</p>}
+          <button style={{ ...styles.primaryButton, marginTop: '1rem', backgroundColor: '#FFFDFC', color: '#7B5E57' }} onClick={fetchResponses}>📊 View Responses</button>
           <button style={{ ...styles.primaryButton, marginTop: '1.5rem', backgroundColor: '#FFFDFC', color: '#7B5E57' }} onClick={handleReset}>🔄 Reset</button>
         </motion.div>
       )}
