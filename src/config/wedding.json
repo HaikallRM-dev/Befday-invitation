@@ -1,0 +1,29 @@
+{
+  "name": "Wedding",
+  "price": 80,
+  "theme": {
+    "cream": "#F9F6F2",
+    "gold": "#D4AF37",
+    "white": "#FFFFFF",
+    "dark": "#302B29"
+  },
+  "music": "/music/wedding.mp3",
+  "images": [
+    "/images/templates/wedding/photo1.jpg",
+    "/images/templates/wedding/photo2.jpg"
+  ],
+  "questions": [
+    { "q": "How do you know the couple?", "options": ["Friend", "Family", "Colleague", "Other"] },
+    { "q": "Dietary restrictions?", "type": "text" },
+    { "q": "Plus one?", "options": ["Yes", "No"] },
+    { "q": "Message for couple?", "type": "text" },
+    { "q": "Song request?", "type": "text" }
+  ],
+  "itinerary": {
+    "date": "TBD",
+    "time": "TBD",
+    "venue": "TBD",
+    "dressCode": "Formal"
+  },
+  "rsvp": true
+}

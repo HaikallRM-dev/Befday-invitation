@@ -1,0 +1,29 @@
+{
+  "name": "Event Party",
+  "price": 50,
+  "theme": {
+    "cream": "#F0F4F8",
+    "navy": "#2C3E50",
+    "gold": "#D4AF37",
+    "white": "#FFFFFF"
+  },
+  "music": "/music/upbeat.mp3",
+  "images": [
+    "/images/templates/event/photo1.jpg",
+    "/images/templates/event/photo2.jpg"
+  ],
+  "questions": [
+    { "q": "How do you know the host?", "options": ["Friend", "Family", "Colleague", "Other"] },
+    { "q": "What are you most excited about?", "type": "text" },
+    { "q": "Dietary restrictions?", "type": "text" },
+    { "q": "Plus one?", "options": ["Yes", "No"] },
+    { "q": "Message for host?", "type": "text" }
+  ],
+  "itinerary": {
+    "date": "TBD",
+    "time": "TBD",
+    "venue": "TBD",
+    "dressCode": "Smart casual"
+  },
+  "rsvp": true
+}

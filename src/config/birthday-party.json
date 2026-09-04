@@ -1,0 +1,36 @@
+{
+  "name": "Birthday Party",
+  "price": 50,
+  "theme": {
+    "cream": "#F9F6F2",
+    "brown": "#7B5E57",
+    "rose": "#D9B8A5",
+    "dark": "#302B29"
+  },
+  "music": "/music/romantic.mp3",
+  "images": [
+    "/images/templates/birthday/photo1.jpg",
+    "/images/templates/birthday/photo2.jpg",
+    "/images/templates/birthday/photo3.jpg",
+    "/images/templates/birthday/photo4.jpg"
+  ],
+  "questions": [
+    { "q": "Who's more clingy?", "options": ["You 🙈", "Me 🙋‍♂️", "Both 💕"] },
+    { "q": "Favourite memory together?", "type": "text" },
+    { "q": "First date location?", "type": "text" },
+    { "q": "First make-out?", "type": "text" },
+    { "q": "Favourite picture?", "type": "text" },
+    { "q": "Qualities wanted?", "type": "text" },
+    { "q": "Always wanted to do?", "type": "text" },
+    { "q": "Favourite thing?", "type": "text" },
+    { "q": "5 years?", "type": "text" },
+    { "q": "One word?", "options": ["Soulmate", "Best friends", "Home 🏠", "Soulmate but not soulmate"] },
+    { "q": "Why birthday?", "options": ["Yes", "No"], "hasText": true }
+  ],
+  "itinerary": {
+    "date": "7 September 2026",
+    "time": "After work",
+    "destination": "Secret Stop",
+    "dressCode": "Casual comfortable"
+  }
+}
